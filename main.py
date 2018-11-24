@@ -88,8 +88,9 @@ def long_signal(ema_short, ema_long):
 def short_signal(ema_short, ema_long):
 	go_short = False
 
-	print("EMA Short: " + str(ema_short))
-	print("EMA Long: " + str(ema_long))
+	if debug:
+		print("short_signal::ema_short: " + str(ema_short))
+		print("short_signal::email_long: " + str(ema_long))
 
 	#if short term signal just dipped below long term signal then indicate a sell
 	if(ema_long[0] > ema_short[0]):
@@ -98,57 +99,50 @@ def short_signal(ema_short, ema_long):
 	
 	return go_short
 
-historical_data = batch_request(['chart'], '3m')
+def ema_crossover_signal(values, short_horizon, long_horizon):
+	signal = 0
+	ema_short = ema_calc(values, short_horizon)
+	ema_long = ema_calc(values, long_horizon)
+
+	if short_signal(ema_short, ema_long):
+		signal = -1
+	else:
+		if long_signal(ema_short, ema_long):
+			signal = 1
+		else:
+			signal = 0
+
+	return signal
+
+def signals_to_string(signal):
+	switcher = {
+		-1: "sell",
+		0: "hold",
+		1: "buy"
+	}
+	return switcher.get(signal, "signal_error")
+
+#main()
+historical_data = batch_request(['chart'], '1y')
 
 for symbol in historical_data:
-	if debug:
-		print (symbol)
+	print (symbol)
 
 	closing_vals = extract_chart_closing_vals(historical_data[symbol]['chart'])
+	
 	if debug:
 		print("closing values")
 		print (closing_vals)
 
-	ema_13 = ema_calc(closing_vals, 13)
-	ema_48 = ema_calc(closing_vals, 48)
+	print("13-48 cross signal")
+	print(signals_to_string(ema_crossover_signal(closing_vals, 13, 48)))
 
-	if debug:
-		print("EMA 13:" + str(ema_13))
-		print("EMA 48:" + str(ema_48))
+	print("50-200 cross signal")
+	print(signals_to_string(ema_crossover_signal(closing_vals, 50, 200)))
+
 	#print(data)
 
-	if short_signal(ema_13, ema_48):
-		print("Sell " + symbol)
-	else:
-		if long_signal(ema_13, ema_48):
-			print("Buy " + symbol)
-		else:
-			print("Hold " + symbol)
-
-#data2 = batch_request(['ohlc'])
-
-#if debug:
-#	print(data2)
-
-#
-
-
-#for symbol in symbols:
-	
-#	closing_price = data[symbol]["ohlc"]["close"]["price"]
-#	print(symbol + ": Closing Price = " + str(closing_price))
-	#ohlc = ticker["ohlc"]
-	#print(ohlc)
 
 
 
-#for ohlc in data:
-#	print(ohlc)
-
-#resp = requests.get('https://api.iextrading.com/1.0/stock/pty/ohlc')
-#if resp.status_code != 200:
-#	raise ApiError('GET /blah/ {}'.format(resp.status_code))
-#ohlc = resp.json()
-#close = ohlc["close"]
-#print(close["price"])
 
