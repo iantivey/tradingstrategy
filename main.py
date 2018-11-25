@@ -4,8 +4,16 @@ import json
 debug = False
 
 api_prefix = 'https://api.iextrading.com/1.0/'
-symbols = ['PTY','JUST','EMB','LQD']
-#symbols = ['PTY','JUST']
+symbols = ['PTY','JUST','EMB','LQD','UNG']
+
+fidelity_sector_etfs = ['FENY', 'FNCL','FHLC', 'FIDU', 'FTEC', 'FMAT', 'FCOM', 'FUTY', 'FREL', 'FDIS', 'FSTA']
+fidelity_broad_etfs = ['ONEQ', 'FDVV', 'FDRR', 'FDMO', 'FDLO', 'FVAL', 'FQAL', 'FIDI', 'FIVA']
+fidelity_bond_etfs = ['FDHY', 'FLDR', 'FBND', 'FLTB', 'FCOR']
+
+ishares_1 = ['IVV', 'EFA', 'IEFA', 'AGG', 'IEMG', 'IJH', 'IWM', 'IJR', 'LQD', 'EEM', 'TIP', 'IVW', 'USMV', 'IWR', 'SHV', 'SHY', 'IWB', 'EWJ', 'ITOT', 'IVE', 'PFF', 'EMB', 'HYG', 'FLOT', 'IXUS', 'MBB', 'IAU', 'MUB', 'IGSB', 'IEF', 'ACWI' 'EFAV', 'SCZ', 'IWV', 'IBB', 'IEI', 'EZU', 'EWZ', 'IJK', 'TLT', 'GOVT', 'HDV', 'IJT', 'IJS', 'IJJ', 'FXI', 'EFV', 'IGIB', 'ITA', 'IUSG' 'DGRO', 'IUSV', 'SLV', 'EEMV', 'OEF', 'INDA', 'AAXJ', 'MCHI', 'EWY', 'EFG', 'EWT', 'ACWV', 'ACWX', 'HEFA', 'SHYG', 'IHI', 'IEUR', 'EWC', 'EWG', 'IUSB', 'STIP', 'EWH', 'ISTB', 'USIG', 'EPP', 'IEV', 'GVI', 'ICF', 'IOO', 'EWU', 'SUB', 'IGV', 'IYG', 'HEZU', 'SLQD', 'IGM', 'GSG', 'SOXX', 'REM', 'EWA', 'DSI', 'ILF', 'IYY', 'AOR', 'IHF', 'IDEV', 'HEWJ', 'CMF', 'EUFN', 'EWP']
+#symbols = symbols + fidelity_sector_etfs + fidelity_broad_etfs + fidelity_bond_etfs
+#symbols = ['FNLC']
+symbols = ishares_1
 
 def batch_request(batch_request_types, range=False):
 	api_function = 'stock/market/batch?symbols='
@@ -47,13 +55,21 @@ def ema_calc(values, time_horizon):
 
     n = len(values) #this is the index of the latest item in the list of values
     
+    #############################
+    # NEED TO CATCH IndexError here and return 0, 0
+    #############################
     #use closing price from time_horizon -1 to seed the calc
-    EMA = values[n-time_horizon-1]
+    try:
+    	EMA = values[n-time_horizon-1]
 
-    for x in range(n-time_horizon, n):
-        EMA_seed = EMA
-        EMA = (values[x] * k) + (EMA_seed * (1-k))
-
+    	for x in range(n-time_horizon, n):
+        	EMA_seed = EMA
+        	EMA = (values[x] * k) + (EMA_seed * (1-k))
+    except IndexError:	
+    	EMA = 0
+    	EMA_seed = 0
+#    print(values)
+    print('EMA-' + str(time_horizon) + ': ' + str(EMA))
     #EMA = today's EMA; EMA_seed = yesterday's EMA
     return [EMA,EMA_seed]
 #end ema_calc
@@ -125,24 +141,62 @@ def signals_to_string(signal):
 #main()
 historical_data = batch_request(['chart'], '1y')
 
-for symbol in historical_data:
-	print (symbol)
+long_symbols_13_48 = []
+short_symbols_13_48 = []
+hold_symbols_13_48 = []
+long_symbols_50_200 = []
+short_symbols_50_200 = []
+hold_symbols_50_200 = []
 
+for symbol in historical_data:
+	if debug:
+		print (symbol)
+	print(symbol)
 	closing_vals = extract_chart_closing_vals(historical_data[symbol]['chart'])
 	
 	if debug:
 		print("closing values")
 		print (closing_vals)
 
-	print("13-48 cross signal")
-	print(signals_to_string(ema_crossover_signal(closing_vals, 13, 48)))
+	#calculate the 13 day / 48 day cross over
+	
+	signal_13_48 = ema_crossover_signal(closing_vals, 13, 48)
+	if signal_13_48 == -1:
+		short_symbols_13_48.append(symbol)
+	if signal_13_48 == 1:
+		long_symbols_13_48.append(symbol)
+	if signal_13_48 == 0:
+		hold_symbols_13_48.append(symbol)
+	
+	if debug:
+		print("13-48 cross signal")
+		print(signals_to_string(signal_13_48))
 
-	print("50-200 cross signal")
-	print(signals_to_string(ema_crossover_signal(closing_vals, 50, 200)))
+	signal_50_200 = ema_crossover_signal(closing_vals, 50, 200)
+
+	if signal_50_200 == -1:
+		short_symbols_50_200.append(symbol)
+	if signal_50_200 == 1:
+		long_symbols_50_200.append(symbol)
+	if signal_50_200 == 0:
+		hold_symbols_50_200.append(symbol)
+
+	if debug:
+		print("50-200 cross signal")
+		print(signals_to_string(signal_50_200))
 
 	#print(data)
 
+print("Today's Long Symbols:")
+print("13/48 - " + str(long_symbols_13_48))
+print("50/200 - " + str(long_symbols_50_200))
 
+print("Today's Short Symbols:")
+print("13/48 - " + str(short_symbols_13_48))
+print("50/200 - " + str(short_symbols_50_200))
 
+print("Today's Hold Symbols:")
+print("13/48 - " + str(hold_symbols_13_48))
+print("50/200 - " + str(hold_symbols_50_200))
 
 
