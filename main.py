@@ -1,26 +1,29 @@
+
+#!/usr/bin/env python3
 import requests
 import json
 
-debug = True
+debug = False
 
 api_prefix = 'https://api.iextrading.com/1.0/'
 symbols = ['PTY','JUST','EMB','LQD','UNG']
+active_symbols=['INDA']
 
 fidelity_sector_etfs = ['FENY', 'FNCL','FHLC', 'FIDU', 'FTEC', 'FMAT', 'FCOM', 'FUTY', 'FREL', 'FDIS', 'FSTA']
 fidelity_broad_etfs = ['ONEQ', 'FDVV', 'FDRR', 'FDMO', 'FDLO', 'FVAL', 'FQAL', 'FIDI', 'FIVA']
 fidelity_bond_etfs = ['FDHY', 'FLDR', 'FBND', 'FLTB', 'FCOR']
 
 ishares = []
-#ishares.append(['IVV', 'EFA', 'IEFA', 'AGG', 'IEMG', 'IJH', 'IWM', 'IJR', 'LQD', 'EEM', 'TIP', 'IVW', 'USMV', 'IWR', 'SHV', 'SHY'])
-#ishares.append(['IWB', 'EWJ', 'ITOT', 'IVE', 'PFF', 'EMB', 'HYG', 'FLOT', 'IXUS', 'MBB', 'IAU', 'MUB', 'IGSB', 'IEF', 'ACWI' 'EFAV'])
-#ishares.append(['SCZ', 'IWV', 'IBB', 'IEI', 'EZU', 'EWZ', 'IJK', 'TLT', 'GOVT', 'HDV', 'IJT', 'IJS', 'IJJ', 'FXI', 'EFV', 'IGIB'])
-#ishares.append(['ITA', 'IUSG' 'DGRO', 'IUSV', 'SLV', 'EEMV', 'OEF', 'INDA', 'AAXJ', 'MCHI', 'EWY', 'EFG', 'EWT', 'ACWV', 'ACWX', 'HEFA']) 
-#ishares.append(['SHYG', 'IHI', 'IEUR', 'EWC', 'EWG', 'IUSB', 'STIP', 'EWH', 'ISTB', 'USIG', 'EPP', 'IEV', 'GVI', 'ICF', 'IOO', 'EWU'])
-#ishares.append(['SUB', 'IGV', 'IYG', 'HEZU', 'SLQD', 'IGM', 'GSG', 'SOXX', 'REM', 'EWA', 'DSI', 'ILF', 'IYY', 'AOR', 'IHF', 'IDEV', 'HEWJ', 'CMF', 'EUFN', 'EWP'])
-#symbols = symbols + fidelity_sector_etfs + fidelity_broad_etfs + fidelity_bond_etfs
-symbols = ['ILF']
-#for ishare in ishares:
-#	symbols = symbols + ishare
+ishares.append(['IVV', 'EFA', 'IEFA', 'AGG', 'IEMG', 'IJH', 'IWM', 'IJR', 'LQD', 'EEM', 'TIP', 'IVW', 'USMV', 'IWR', 'SHV', 'SHY'])
+ishares.append(['IWB', 'EWJ', 'ITOT', 'IVE', 'PFF', 'EMB', 'HYG', 'FLOT', 'IXUS', 'MBB', 'IAU', 'MUB', 'IGSB', 'IEF', 'ACWI' 'EFAV'])
+ishares.append(['SCZ', 'IWV', 'IBB', 'IEI', 'EZU', 'EWZ', 'IJK', 'TLT', 'GOVT', 'HDV', 'IJT', 'IJS', 'IJJ', 'FXI', 'EFV', 'IGIB'])
+ishares.append(['ITA', 'IUSG' 'DGRO', 'IUSV', 'SLV', 'EEMV', 'OEF', 'INDA', 'AAXJ', 'MCHI', 'EWY', 'EFG', 'EWT', 'ACWV', 'ACWX', 'HEFA']) 
+ishares.append(['SHYG', 'IHI', 'IEUR', 'EWC', 'EWG', 'IUSB', 'STIP', 'EWH', 'ISTB', 'USIG', 'EPP', 'IEV', 'GVI', 'ICF', 'IOO', 'EWU'])
+ishares.append(['SUB', 'IGV', 'IYG', 'HEZU', 'SLQD', 'IGM', 'GSG', 'SOXX', 'REM', 'EWA', 'DSI', 'ILF', 'IYY', 'AOR', 'IHF', 'IDEV', 'HEWJ', 'CMF', 'EUFN', 'EWP'])
+
+symbols = symbols + fidelity_sector_etfs + fidelity_broad_etfs + fidelity_bond_etfs
+for ishare in ishares:
+	symbols = symbols + ishare
 #
 #symbols = ['MBB']
 
@@ -109,7 +112,8 @@ def ema_calc(values, time_horizon):
     	EMA = 0
     	EMA_seed = 0
 #    print(values)
-    print('EMA-' + str(time_horizon) + ': ' + str(EMA))
+    if debug:
+    	print('EMA-' + str(time_horizon) + ': ' + str(EMA))
     #EMA = today's EMA; EMA_seed = yesterday's EMA
     return [EMA,EMA_seed]
 #end ema_calc
@@ -205,66 +209,112 @@ def signals_to_string(signal):
 	}
 	return switcher.get(signal, "signal_error")
 
-#main()
-historical_data = batch_request(['chart'], '2y')
+def run_calcs():
+	#main()
+	historical_data = batch_request(['chart'], '2y')
 
-long_symbols_13_48 = []
-short_symbols_13_48 = []
-hold_symbols_13_48 = []
-long_symbols_50_200 = []
-short_symbols_50_200 = []
-hold_symbols_50_200 = []
+	long_symbols_13_48 = []
+	short_symbols_13_48 = []
+	hold_symbols_13_48 = []
+	long_symbols_50_200 = []
+	short_symbols_50_200 = []
+	hold_symbols_50_200 = []
 
-for symbol in historical_data:
-	if debug:
-		print ('main::symbol::' + symbol)
-	print(symbol)
-	closing_vals = extract_chart_closing_vals(historical_data[symbol]['chart'])
-	
-	if debug:
-		print("main::closing values count::"+str(len(closing_vals)))
-		print("main::closing values::")
-		print (closing_vals)
+	for symbol in historical_data:
+		if debug:
+			print ('main::symbol::' + symbol)
+		closing_vals = extract_chart_closing_vals(historical_data[symbol]['chart'])
+		
+		if debug:
+			print("main::closing values count::"+str(len(closing_vals)))
+			print("main::closing values::")
+			print (closing_vals)
 
-	#calculate the 13 day / 48 day cross over
-	
-	signal_13_48 = ema_crossover_signal(closing_vals, 13, 48)
-	if signal_13_48 == -1:
-		short_symbols_13_48.append(symbol)
-	if signal_13_48 == 1:
-		long_symbols_13_48.append(symbol)
-	if signal_13_48 == 0:
-		hold_symbols_13_48.append(symbol)
-	
-	if debug:
-		print("main::13-48 cross signal::")
-		print(signals_to_string(signal_13_48))
+		#calculate the 13 day / 48 day cross over
+		
+		signal_13_48 = ema_crossover_signal(closing_vals, 13, 48)
+		if signal_13_48 == -1:
+			short_symbols_13_48.append(symbol)
+		if signal_13_48 == 1:
+			long_symbols_13_48.append(symbol)
+		if signal_13_48 == 0:
+			hold_symbols_13_48.append(symbol)
+		
+		if debug:
+			print("main::13-48 cross signal::")
+			print(signals_to_string(signal_13_48))
 
-	signal_50_200 = ema_crossover_signal(closing_vals, 50, 200)
+		signal_50_200 = ema_crossover_signal(closing_vals, 50, 200)
 
-	if signal_50_200 == -1:
-		short_symbols_50_200.append(symbol)
-	if signal_50_200 == 1:
-		long_symbols_50_200.append(symbol)
-	if signal_50_200 == 0:
-		hold_symbols_50_200.append(symbol)
+		if signal_50_200 == -1:
+			short_symbols_50_200.append(symbol)
+		if signal_50_200 == 1:
+			long_symbols_50_200.append(symbol)
+		if signal_50_200 == 0:
+			hold_symbols_50_200.append(symbol)
 
-	if debug:
-		print("main::50-200 cross signal::")
-		print(signals_to_string(signal_50_200))
+		if debug:
+			print("main::50-200 cross signal::")
+			print(signals_to_string(signal_50_200))
 
-	#print(data)
-print("-----------------------------------------------------------------")
-print("Today's Long Symbols:")
-print("13/48 - " + str(long_symbols_13_48))
-print("50/200 - " + str(long_symbols_50_200))
+		#print(data)
+	print("-----------------------------------------------------------------")
+	print("Today's Long Symbols:")
+	print("13/48 - " + str(long_symbols_13_48))
+	print("50/200 - " + str(long_symbols_50_200))
 
-print("Today's Short Symbols:")
-print("13/48 - " + str(short_symbols_13_48))
-print("50/200 - " + str(short_symbols_50_200))
+	print("Today's Short Symbols:")
+	print("13/48 - " + str(short_symbols_13_48))
+	print("50/200 - " + str(short_symbols_50_200))
 
-print("Today's Hold Symbols:")
-print("13/48 - " + str(hold_symbols_13_48))
-print("50/200 - " + str(hold_symbols_50_200))
+	print("Today's Hold Symbols:")
+	print("13/48 - " + str(hold_symbols_13_48))
+	print("50/200 - " + str(hold_symbols_50_200))
+
+	results = [short_symbols_13_48, hold_symbols_13_48, long_symbols_13_48, short_symbols_50_200, hold_symbols_50_200, long_symbols_50_200]
+	return results
+#end def run_calcs
+
+#main
+from http.server import BaseHTTPRequestHandler, HTTPServer
+ 
+# HTTPRequestHandler class
+class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
+ 
+  # GET
+	def do_GET(self):
+		ema_results = run_calcs()
+		# Send response status code
+		self.send_response(200)
+ 
+        # Send headers
+		self.send_header('Content-type','text/html')
+		self.end_headers()
+ 
+		# Send message back to client
+		message = "Todays Short Symbols: <br /> 13\\48:" + str(ema_results[0]) + "<br /><br />"
+		message = message + "Todays Long Symbols: <br /> 13\\48:" + str(ema_results[2]) + "<br /><br />"
+		message = message + "Todays Short Symbols: <br /> 50\\200:" + str(ema_results[3]) + "<br /><br />"
+		message = message + "Todays Long Symbols: <br /> 50\\200:" + str(ema_results[5]) + "<br /><br />"
+        
+		# Write content as utf-8 data
+		self.wfile.write(bytes(message, "utf8"))
+		return
+ 
+def run():
+  print('starting server...')
+ 
+  # Server settings
+  # Choose port 8080, for port 80, which is normally used for a http server, you need root access
+  server_address = ('127.0.0.1', 8081)
+  httpd = HTTPServer(server_address, testHTTPServer_RequestHandler)
+  print('running server...')
+  httpd.serve_forever()
+ 
+ 
+run()
+
+
+
 
 
