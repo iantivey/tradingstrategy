@@ -3,11 +3,11 @@
 import requests
 import json
 
-debug = False
+debug = True
+uber_debug = False
 
 api_prefix = 'https://api.iextrading.com/1.0/'
-symbols = ['PTY','JUST','EMB','LQD','UNG']
-active_symbols=['INDA']
+
 
 fidelity_sector_etfs = ['FENY', 'FNCL','FHLC', 'FIDU', 'FTEC', 'FMAT', 'FCOM', 'FUTY', 'FREL', 'FDIS', 'FSTA']
 fidelity_broad_etfs = ['ONEQ', 'FDVV', 'FDRR', 'FDMO', 'FDLO', 'FVAL', 'FQAL', 'FIDI', 'FIVA']
@@ -21,13 +21,14 @@ ishares.append(['ITA', 'IUSG' 'DGRO', 'IUSV', 'SLV', 'EEMV', 'OEF', 'INDA', 'AAX
 ishares.append(['SHYG', 'IHI', 'IEUR', 'EWC', 'EWG', 'IUSB', 'STIP', 'EWH', 'ISTB', 'USIG', 'EPP', 'IEV', 'GVI', 'ICF', 'IOO', 'EWU'])
 ishares.append(['SUB', 'IGV', 'IYG', 'HEZU', 'SLQD', 'IGM', 'GSG', 'SOXX', 'REM', 'EWA', 'DSI', 'ILF', 'IYY', 'AOR', 'IHF', 'IDEV', 'HEWJ', 'CMF', 'EUFN', 'EWP'])
 
-symbols = symbols + fidelity_sector_etfs + fidelity_broad_etfs + fidelity_bond_etfs
+watchlist = ['PTY','JUST','EMB','LQD','UNG']
+watchlist = watchlist + fidelity_sector_etfs + fidelity_broad_etfs + fidelity_bond_etfs
 for ishare in ishares:
-	symbols = symbols + ishare
-#
-#symbols = ['MBB']
+	watchlist = watchlist + ishare
 
-def batch_request(batch_request_types, range=False):
+#watchlist = ['MUB']
+
+def batch_request(symbols, batch_request_types, range=False):
 	api_function = 'stock/market/batch?symbols='
 
 	api_request = api_prefix + api_function
@@ -68,7 +69,7 @@ def calc_ema_seed(values, time_horizon): #calculates SMA of time period leading 
 		for z in range(m - time_horizon, m):
 			seed = seed + values[z]
 			i = i + 1
-			if debug:
+			if uber_debug:
 				print("calc_ema_seed::i::" + str(i))
 				print("calc_ema_seed::z::" + str(z))
 				print("calc_ema_seed::values[z]::" + str(values[z]))
@@ -86,30 +87,48 @@ def calc_ema_seed(values, time_horizon): #calculates SMA of time period leading 
 def ema_calc3(values, time_horizon):
 	#[todays price * multiplier] + [ema(yest) * multiplier]
 	#calculate initial value for yesterdays EMA by calculating SMA across first time_horizon values
-	for x in range(0 to time_horizon-1):
-		SMA = SMA + values[x]
+	print("ema_calc3::time_horizon::" + str(time_horizon))
+	SMA = 0
 
-	SMA = SMA / time_horizon	
+	if (len(values) > (2 * time_horizon)):
+		for x in range(0, time_horizon-1):
+			SMA = SMA + values[x]
 
-	EMA = SMA
-	#EMA = calc_ema_seed(values, time_horizon)
+		SMA = SMA / time_horizon	
 
-	vlen = len(values)
+		#print("SMA::" + str(SMA))
 
-	multiplier = 2 / (time_horizon + 1)
+		EMA = SMA
+		#EMA = calc_ema_seed(values, time_horizon)
 
-	try:
-		for x in range(time_horizon, vlen):
-			EMA_seed = EMA
-			EMA = (values[x] * multiplier) + (EMA_seed * multiplier)
+		vlen = len(values)
 
-			if debug:
-				print('ema_calc3::x::' + str(x))
+		multiplier = 2 / (time_horizon + 1)
+		#print("multiplier::" + str(multiplier))
 
-	except IndexError:
+		k = 2 / (time_horizon + 1)
+
+		try:
+			for x in range(time_horizon, vlen):
+				EMA_seed = EMA
+				#EMA = (values[x] * multiplier) + (EMA_seed * multiplier)
+				EMA = (values[x] * k) + (EMA_seed * (1-k))
+
+				#print("EMA::" + str(EMA))
+
+				if uber_debug:
+					print('ema_calc3::x::' + str(x))
+
+		except IndexError:
+			EMA = 0
+			EMA_seed = 0
+	else:
+		print("can't calc EMA over time_horizon " + str(time_horizon))
 		EMA = 0
 		EMA_seed = 0
-    return [EMA,EMA_seed]
+
+	print("ema_calc3::EMA::" + str(EMA))
+	return [EMA,EMA_seed]
 
 
 def ema_calc(values, time_horizon):
@@ -126,7 +145,8 @@ def ema_calc(values, time_horizon):
     #############################
     #use closing price from time_horizon -1 to seed the calc
     try:
-    	EMA = calc_ema_seed(values, time_horizon)
+    	#EMA = calc_ema_seed(values, time_horizon)
+    	EMA = values[0]
     	if debug:
     		print("ema_calc::EMA'::" + str(EMA))
 
@@ -179,7 +199,7 @@ def extract_chart_closing_vals(chart_json):
 
 	for daily_vals in chart_json:
 		closing_vals.append(daily_vals['close'])
-		if debug:
+		if uber_debug:
 			print("extract_chart_closing_vals::date::" + daily_vals['date'] + "::close::" + str(daily_vals['close']))
 
 	return closing_vals
@@ -237,9 +257,9 @@ def signals_to_string(signal):
 	}
 	return switcher.get(signal, "signal_error")
 
-def run_calcs():
+def run_calcs(symbols):
 	#main()
-	historical_data = batch_request(['chart'], '2y')
+	historical_data = batch_request(symbols, ['chart'], '5y')
 
 	long_symbols_13_48 = []
 	short_symbols_13_48 = []
@@ -255,6 +275,8 @@ def run_calcs():
 		
 		if debug:
 			print("main::closing values count::"+str(len(closing_vals)))
+			
+		if uber_debug:
 			print("main::closing values::")
 			print (closing_vals)
 
@@ -305,28 +327,56 @@ def run_calcs():
 
 #main
 from http.server import BaseHTTPRequestHandler, HTTPServer
- 
+from urllib.parse import urlparse
+from urllib.parse import parse_qs
+from urllib.parse import parse_qsl
+
 # HTTPRequestHandler class
 class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
  
   # GET
 	def do_GET(self):
-		ema_results = run_calcs()
-		# Send response status code
-		self.send_response(200)
- 
-        # Send headers
-		self.send_header('Content-type','text/html')
-		self.end_headers()
- 
-		# Send message back to client
-		message = "Todays Short Symbols: <br /> 13\\48:" + str(ema_results[0]) + "<br /><br />"
-		message = message + "Todays Long Symbols: <br /> 13\\48:" + str(ema_results[2]) + "<br /><br />"
-		message = message + "Todays Short Symbols: <br /> 50\\200:" + str(ema_results[3]) + "<br /><br />"
-		message = message + "Todays Long Symbols: <br /> 50\\200:" + str(ema_results[5]) + "<br /><br />"
+		print('received request...')
+		parse = urlparse(self.requestline)
+		
+		if (self.requestline == 'GET /favicon.ico HTTP/1.1'):
+			print("FAVICON GAHHHH")
+		else:
+
+
+			qs = parse_qs(parse.query)
+			#.query.get('symbol', None)
+			print (qs)
+			print (qs.get('symbol'))
+
+			if (len(qs) !=  0):
+				symbols = qs.get("symbol")
+				if debug:
+					for symbol in symbols:
+						print(symbol)
+				#enable EMA print
+			else:
+				symbols = watchlist
+
+			ema_results = run_calcs(symbols)
+			# Send response status code
+			self.send_response(200)
+	 
+	        # Send headers
+			self.send_header('Content-type','text/html')
+			self.end_headers()
+	 
+			# Send message back to client
+			message = "Todays Short Symbols: <br /> 13\\48:" + str(ema_results[0]) + "<br /><br />"
+			message = message + "Todays Long Symbols: <br /> 13\\48:" + str(ema_results[2]) + "<br /><br />"
+			message = message + "Todays Hold Symbols: <br /> 13\\48:" + str(ema_results[1]) + "<br /><br />"		
+			message = message + "Todays Short Symbols: <br /> 50\\200:" + str(ema_results[3]) + "<br /><br />"
+			message = message + "Todays Hold Symbols: <br /> 50\\200:" + str(ema_results[4]) + "<br /><br />"
+			message = message + "Todays Long Symbols: <br /> 50\\200:" + str(ema_results[5]) + "<br /><br />"
+
         
-		# Write content as utf-8 data
-		self.wfile.write(bytes(message, "utf8"))
+			# Write content as utf-8 data
+			self.wfile.write(bytes(message, "utf8"))
 		return
  
 def run():
@@ -341,7 +391,7 @@ def run():
  
  
 run()
-
+#run_calcs()
 
 
 
