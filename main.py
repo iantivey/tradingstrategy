@@ -58,7 +58,7 @@ def batch_request(batch_request_types, range=False):
 def json_print(to_print):
 	print (json.dumps(to_print, indent=4, sort_keys=True))
 
-def calc_ema_seed(values, time_horizon):
+def calc_ema_seed(values, time_horizon): #calculates SMA of time period leading into EMA calc period
 	try:
 		i=0
 		m = len(values) - time_horizon - 1
@@ -67,13 +67,13 @@ def calc_ema_seed(values, time_horizon):
 		seed = 0
 		for z in range(m - time_horizon, m):
 			seed = seed + values[z]
+			i = i + 1
 			if debug:
-				i = i + 1
 				print("calc_ema_seed::i::" + str(i))
 				print("calc_ema_seed::z::" + str(z))
 				print("calc_ema_seed::values[z]::" + str(values[z]))
 
-		seed = seed / time_horizon
+		seed = seed / i
 
 		if debug:
 			print("EMA_seed::seed::" + str(seed))
@@ -82,6 +82,34 @@ def calc_ema_seed(values, time_horizon):
 		seed = 0
 
 	return seed
+
+def ema_calc3(values, time_horizon):
+	#[todays price * multiplier] + [ema(yest) * multiplier]
+	#calculate initial value for yesterdays EMA by calculating SMA across first time_horizon values
+	for x in range(0 to time_horizon-1):
+		SMA = SMA + values[x]
+
+	SMA = SMA / time_horizon	
+
+	EMA = SMA
+	#EMA = calc_ema_seed(values, time_horizon)
+
+	vlen = len(values)
+
+	multiplier = 2 / (time_horizon + 1)
+
+	try:
+		for x in range(time_horizon, vlen):
+			EMA_seed = EMA
+			EMA = (values[x] * multiplier) + (EMA_seed * multiplier)
+
+			if debug:
+				print('ema_calc3::x::' + str(x))
+
+	except IndexError:
+		EMA = 0
+		EMA_seed = 0
+    return [EMA,EMA_seed]
 
 
 def ema_calc(values, time_horizon):
@@ -188,8 +216,8 @@ def short_signal(ema_short, ema_long):
 
 def ema_crossover_signal(values, short_horizon, long_horizon):
 	signal = 0
-	ema_short = ema_calc(values, short_horizon)
-	ema_long = ema_calc(values, long_horizon)
+	ema_short = ema_calc3(values, short_horizon)
+	ema_long = ema_calc3(values, long_horizon)
 
 	if short_signal(ema_short, ema_long):
 		signal = -1
