@@ -2,8 +2,11 @@
 #!/usr/bin/env python3
 import requests
 import json
+#from flask import Flask, request
+#from flask_restful import Resource, Api
+#from flask.ext.jsonpify import jsonify
 
-debug = True
+debug = False
 uber_debug = False
 
 api_prefix = 'https://api.iextrading.com/1.0/'
@@ -13,20 +16,40 @@ fidelity_sector_etfs = ['FENY', 'FNCL','FHLC', 'FIDU', 'FTEC', 'FMAT', 'FCOM', '
 fidelity_broad_etfs = ['ONEQ', 'FDVV', 'FDRR', 'FDMO', 'FDLO', 'FVAL', 'FQAL', 'FIDI', 'FIVA']
 fidelity_bond_etfs = ['FDHY', 'FLDR', 'FBND', 'FLTB', 'FCOR']
 
-ishares = []
-ishares.append(['IVV', 'EFA', 'IEFA', 'AGG', 'IEMG', 'IJH', 'IWM', 'IJR', 'LQD', 'EEM', 'TIP', 'IVW', 'USMV', 'IWR', 'SHV', 'SHY'])
-ishares.append(['IWB', 'EWJ', 'ITOT', 'IVE', 'PFF', 'EMB', 'HYG', 'FLOT', 'IXUS', 'MBB', 'IAU', 'MUB', 'IGSB', 'IEF', 'ACWI' 'EFAV'])
-ishares.append(['SCZ', 'IWV', 'IBB', 'IEI', 'EZU', 'EWZ', 'IJK', 'TLT', 'GOVT', 'HDV', 'IJT', 'IJS', 'IJJ', 'FXI', 'EFV', 'IGIB'])
-ishares.append(['ITA', 'IUSG' 'DGRO', 'IUSV', 'SLV', 'EEMV', 'OEF', 'INDA', 'AAXJ', 'MCHI', 'EWY', 'EFG', 'EWT', 'ACWV', 'ACWX', 'HEFA']) 
-ishares.append(['SHYG', 'IHI', 'IEUR', 'EWC', 'EWG', 'IUSB', 'STIP', 'EWH', 'ISTB', 'USIG', 'EPP', 'IEV', 'GVI', 'ICF', 'IOO', 'EWU'])
-ishares.append(['SUB', 'IGV', 'IYG', 'HEZU', 'SLQD', 'IGM', 'GSG', 'SOXX', 'REM', 'EWA', 'DSI', 'ILF', 'IYY', 'AOR', 'IHF', 'IDEV', 'HEWJ', 'CMF', 'EUFN', 'EWP'])
+#ishares = []
+#ishares.append(['IVV', 'EFA', 'IEFA', 'AGG', 'IEMG', 'IJH', 'IWM', 'IJR', 'LQD', 'EEM', 'TIP', 'IVW', 'USMV', 'IWR', 'SHV', 'SHY'])
+#ishares.append(['IWB', 'EWJ', 'ITOT', 'IVE', 'PFF', 'EMB', 'HYG', 'FLOT', 'IXUS', 'MBB', 'IAU', 'MUB', 'IGSB', 'IEF', 'ACWI' 'EFAV'])
+#ishares.append(['SCZ', 'IWV', 'IBB', 'IEI', 'EZU', 'EWZ', 'IJK', 'TLT', 'GOVT', 'HDV', 'IJT', 'IJS', 'IJJ', 'FXI', 'EFV', 'IGIB'])
+#ishares.append(['ITA', 'IUSG' 'DGRO', 'IUSV', 'SLV', 'EEMV', 'OEF', 'INDA', 'AAXJ', 'MCHI', 'EWY', 'EFG', 'EWT', 'ACWV', 'ACWX', 'HEFA']) 
+#ishares.append(['SHYG', 'IHI', 'IEUR', 'EWC', 'EWG', 'IUSB', 'STIP', 'EWH', 'ISTB', 'USIG', 'EPP', 'IEV', 'GVI', 'ICF', 'IOO', 'EWU'])
+#ishares.append(['SUB', 'IGV', 'IYG', 'HEZU', 'SLQD', 'IGM', 'GSG', 'SOXX', 'REM', 'EWA', 'DSI', 'ILF', 'IYY', 'AOR', 'IHF', 'IDEV', 'HEWJ', 'CMF', 'EUFN', 'EWP'])
 
-watchlist = ['PTY','JUST','EMB','LQD','UNG']
-watchlist = watchlist + fidelity_sector_etfs + fidelity_broad_etfs + fidelity_bond_etfs
+ishares = []
+ishares.append(['IVV','EFA','IEFA','AGG','IEMG','IJH','IWM','IJR','LQD','EEM','TIP','IVW','USMV','IWR','SHV','IWB','SHY','EWJ','ITOT','IVE','EMB','PFF','HYG','FLOT','IXUS','MBB','IAU','MUB','IGSB','ACWI','IEF','SCZ'])
+ishares.append(['EFAV','IWV','IBB','IEI','EZU','IJK','TLT','EWZ','GOVT','HDV','IJT','IJS','IJJ','FXI','EFV','IGIB','IUSG','ITA','DGRO','IUSV','OEF','EEMV','INDA','SLV','AAXJ','EWY','MCHI','EFG','ACWV','EWT','ACWX','HEFA','IHI','IEUR','SHYG','EWC'])
+ishares.append(['IUSB','EWG','EWH','STIP','ISTB','USIG','EPP','IEV','ICF','GVI','IOO','IGV','EWU','SUB','IYG','HEZU'])
+ishares.append(['IGM','SLQD','SOXX','REM','GSG','DSI','IHF','EWA','IYY','ILF','AOR','IDEV','HEWJ','CMF','EWW','AOM'])
+ishares.append(['EWP','EUFN','AIA','IWC','JKD','IAGG','EWL','AOA','ITB','IBDM','IBDL','SUSA','IPAC','IGOV','IGE','INDY'])
+ishares.append(['USRT','IBDK','IYT','JKG','IAT','TLH','EWQ','IGLB','IBDN','EWM','URTH','TUR','EWS','CRBN','ERUS','DVYE'])
+ishares.append(['THD','FM','IBDO','EZA','IFGL','AOK','EIDO','AGZ','ESGE','EEMA','ECH','IHE','TFLO','LEMB','IEO','EMHY'])
+ishares.append(['IBDQ','REZ','SCJ','CMBS','NYF','IBMI','IBDP','PICK','ICVT','IYLD','IBMH','HEEM','HEWG','USHY','EPOL','IAI'])
+ishares.append(['SMIN','IBMJ','IBMK','EWD','JKJ','EEMS','EUSA','GHYG','KSA','EXI','IEZ','ILTB','IEUS','BKF','IWL','RING'])
+ishares.append(['EWI','ICLN','IBDR','TOK','EPU','EWN','ENZL','EPHE','QLTA','IBDS','WPS','EIS','IBDC','IBML','ESGU','EWO'])
+ishares.append(['GNMA','IAK','GBF','IBCD','ISHG','CEMB','EWZS','FALN','HYXU','IBDD','EIRL','IMTB','CNYA','QAT','IGN','IPFF','EWK','EWUS','FILL','SLVP','IBCE','EWGS','EDEN','UAE','HEWC','IFEU','ENOR','HEWY','HAWX','VEGI','HSCZ','ICOL','SMMD','AGT','ECNS','SUSC','HEWU','HEWP','HYXE','EMXC','HEWL','HAUD','HEWW'])
+
+watchlist = []
+#watchlist = ['PTY','JUST','EMB','LQD','UNG']
+#watchlist = watchlist + fidelity_sector_etfs + fidelity_broad_etfs + fidelity_bond_etfs
 for ishare in ishares:
 	watchlist = watchlist + ishare
 
 #watchlist = ['MUB']
+
+def request(symbols, batch_request_types, range=False):
+
+	#split symbols into lists of 100 length
+
+	
 
 def batch_request(symbols, batch_request_types, range=False):
 	api_function = 'stock/market/batch?symbols='
@@ -330,6 +353,24 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 from urllib.parse import parse_qs
 from urllib.parse import parse_qsl
+#from flask import 
+
+def jsonified_output(symbol_list):
+		ema_results = ema_calcs(watchlist)
+		result = {{'short_13_48': ema_results[0]},{'hold_13_48': ema_results[1]},{'long_13_48': ema_results[2]},{'short_50_200': ema_results[3]},{'hold_50_200': ema_results[4]},{'long_50_200': ema_results[5]}} 
+		return jsonify(result)
+
+
+class API_One_Symbol:
+	def get(self, symbol_name):
+		return "Received Symbol " + symbol_name
+		#return jsonified_output(symbol_name)
+
+class API_All_Symbols:
+	def get(self):
+		return jsonified_output(watchlist)
+
+
 
 # HTTPRequestHandler class
 class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
@@ -366,8 +407,9 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			self.send_header('Content-type','text/html')
 			self.end_headers()
 	 
+			message = "Total number of symbols: " + str(len(symbols)) + "<br /><br />"
 			# Send message back to client
-			message = "Todays Short Symbols: <br /> 13\\48:" + str(ema_results[0]) + "<br /><br />"
+			message = message + "Todays Short Symbols: <br /> 13\\48:" + str(ema_results[0]) + "<br /><br />"
 			message = message + "Todays Long Symbols: <br /> 13\\48:" + str(ema_results[2]) + "<br /><br />"
 			message = message + "Todays Hold Symbols: <br /> 13\\48:" + str(ema_results[1]) + "<br /><br />"		
 			message = message + "Todays Short Symbols: <br /> 50\\200:" + str(ema_results[3]) + "<br /><br />"
@@ -388,9 +430,18 @@ def run():
   httpd = HTTPServer(server_address, testHTTPServer_RequestHandler)
   print('running server...')
   httpd.serve_forever()
- 
+
+def run_as_api():
+	api = Flask(__name__)
+	api = Api(app)
+	api.add_resource(API_All_Symbols, '/all')
+	api.add_resource(API_One_Symbol,'/symbol/<symbol_name>') 
+
+	if __name__ == '__main__':
+		app.run(port='8123')
  
 run()
+#run_as_api()
 #run_calcs()
 
 
