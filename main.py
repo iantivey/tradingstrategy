@@ -2,10 +2,13 @@
 #!/usr/bin/env python3
 import requests
 import json
+import pprint
+from jsonmerge import merge
 from flask import Flask, request
 from flask_restful import Resource, Api
 #from flask.ext.jsonpify import jsonify
 from flask import jsonify
+
 
 debug = False
 uber_debug = False
@@ -47,38 +50,54 @@ for ishare in ishares:
 
 #watchlist = ['MUB']
 
-def request(symbols, batch_request_types, range=False):
-
-	#split symbols into lists of 100 length
-	return False
-	
-
 def batch_request(symbols, batch_request_types, range=False):
 	api_function = 'stock/market/batch?symbols='
+	request_symbols = ""
+	api_requests = []
+	data = {}
+	batch_response = {}
 
-	api_request = api_prefix + api_function
+	request_prefix = api_prefix + api_function
+	x = 0
+	i = 0
 
 	for symbol in symbols:
-		api_request = api_request + symbol + ","	
-	api_request = api_request[:len(api_request)-1] + "&types=" #strip the , off the end of the request URL
+		request_symbols = request_symbols + symbol + ","
+		#api_requests[i] = api_requests[i] + symbol + ","
+		x = x + 1
+		if x == 100:
+			api_requests.append(request_symbols)
+			request_symbols = ""
+			x = 0
 
+	for api_request in api_requests:
+		api_request = api_request[:len(api_request)-1] + "&types=" #strip the , off the end of the request URL
 
 	for batch_request_type in batch_request_types:
-		api_request = api_request+batch_request_type+','
-	api_request = api_request[:len(api_request)-1] #strip the , off the end
+		api_suffix = batch_request_type+','
+	api_suffix = api_suffix[:len(api_suffix)-1] #strip the , off the end
 
 	if range != False:
-		api_request = api_request + '&range=' + range
+		api_suffix = api_suffix + '&range=' + range
 
 	if debug:
 		print('batch_request::api_request::'+api_request)
 
-	resp = requests.get(api_request)
+	for api_request in api_requests:
+		print("api_request::"+api_request)
+		resp = requests.get(request_prefix + api_request + api_suffix)
 
-	if resp.status_code != 200:
-		raise ApiError(api_request + ':: {}'.format(resp.status_code))
+		if resp.status_code != 200:
+			raise Exception(request_prefix + api_request + api_suffix + ':: {}'.format(resp.status_code))
 
-	return resp.json()
+		print("resp.json()::" + str(resp.json()))
+		#batch_response.append(resp)
+		batch_response.update(resp.json())
+
+	#batch_response = merge(batch_response, resp.json)
+
+	print("batch_response::" + str(batch_response))
+	return batch_response
 #end def batch_request
 
 def json_print(to_print):
@@ -296,7 +315,7 @@ def run_calcs(symbols):
 	for symbol in historical_data:
 		if debug:
 			print ('main::symbol::' + symbol)
-		closing_vals = extract_chart_closing_vals(historical_data[symbol]['chart'])
+		closing_vals = extract_chart_closing_vals(historical_data[symbol])
 		
 		if debug:
 			print("main::closing values count::"+str(len(closing_vals)))
@@ -478,6 +497,8 @@ def run():
   httpd.serve_forever()
 
 def run_as_api():
+	pp = pprint.PrettyPrinter(indent=4)
+
 	app = Flask(__name__)
 	
 	@app.route('/')
