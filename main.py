@@ -376,7 +376,7 @@ from urllib.parse import parse_qs
 from urllib.parse import parse_qsl
 #from flask import 
 
-def jsonified_output(symbol_list):
+def jsonified_output(symbol_list, hold=True):
 		ema_results = run_calcs(symbol_list)
 
 		result = '{"data" : {"short_13_48" : ['
@@ -386,12 +386,13 @@ def jsonified_output(symbol_list):
 			result = result[:len(result)-1] #strip comma from end
 		result = result + '],'
 
-		result = result + '"hold_13_48" : ['
-		for r in ema_results[1]:
-			result = result + '{"symbol" : "' + r + '"},'
-		if len(ema_results[1]) > 0:
-			result = result[:len(result)-1] #strip comma from end
-		result = result + '],'
+		if hold:
+			result = result + '"hold_13_48" : ['
+			for r in ema_results[1]:
+				result = result + '{"symbol" : "' + r + '"},'
+			if len(ema_results[1]) > 0:
+				result = result[:len(result)-1] #strip comma from end
+			result = result + '],'
 
 		result = result + '"long_13_48" : ['
 		for r in ema_results[2]:
@@ -407,12 +408,13 @@ def jsonified_output(symbol_list):
 			result = result[:len(result)-1] #strip comma from end	
 		result = result + '],'
 
-		result = result + '"hold_50_200" : ['
-		for r in ema_results[4]:
-			result = result + '{"symbol" : "' + r + '"},'
-		if len(ema_results[4]) > 0:		
-			result = result[:len(result)-1] #strip comma from end	
-		result = result + '],'
+		if hold:
+			result = result + '"hold_50_200" : ['
+			for r in ema_results[4]:
+				result = result + '{"symbol" : "' + r + '"},'
+			if len(ema_results[4]) > 0:		
+				result = result[:len(result)-1] #strip comma from end	
+			result = result + '],'
 
 		result = result + '"long_50_200" : ['
 		for r in ema_results[5]:
@@ -515,6 +517,10 @@ def run_as_api():
 	#api = Api(app)
 	#api.add_resource(API_All_Symbols, '/all')
 	#api.add_resource(API_One_Symbol,'/symbol/<symbol_name>') 
+
+	@app.route('/buysell')
+	def buy_sell():
+		return jsonified_output(watchlist, False)
 
 	if __name__ == '__main__':
 		app.run(port='8123')
