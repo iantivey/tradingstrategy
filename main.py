@@ -10,12 +10,12 @@ from flask_restful import Resource, Api
 from flask import jsonify
 
 
-debug = False
+debug = True
 uber_debug = False
 
 api_prefix = 'https://api.iextrading.com/1.0/'
 
-current_active = ['INDA','LQD','OUSA','PTY']
+current_active = ['INDA','LQD','OUSA','PTY','CMF']
 
 fidelity_sector_etfs = ['FENY', 'FNCL','FHLC', 'FIDU', 'FTEC', 'FMAT', 'FCOM', 'FUTY', 'FREL', 'FDIS', 'FSTA']
 fidelity_broad_etfs = ['ONEQ', 'FDVV', 'FDRR', 'FDMO', 'FDLO', 'FVAL', 'FQAL', 'FIDI', 'FIVA']
@@ -48,6 +48,16 @@ watchlist = current_active
 for ishare in ishares:
 	watchlist = watchlist + ishare
 
+#for fidelity_bond_etf in fidelity_bond_etfs:
+watchlist = watchlist + fidelity_bond_etfs
+
+#for fidelity_broad_etf in fidelity_broad_etfs:
+watchlist = watchlist + fidelity_broad_etfs 	
+
+#for fidelity_sector_etf in fidelity_sector_etfs:
+watchlist = watchlist + fidelity_broad_etfs
+
+
 #watchlist = ['MUB']
 
 def batch_request(symbols, batch_request_types, range=False):
@@ -62,6 +72,8 @@ def batch_request(symbols, batch_request_types, range=False):
 	i = 0
 
 	for symbol in symbols:
+		if debug:
+			print("batch_request::symbol::" + symbol)
 		request_symbols = request_symbols + symbol + ","
 		#api_requests[i] = api_requests[i] + symbol + ","
 		x = x + 1
@@ -69,6 +81,9 @@ def batch_request(symbols, batch_request_types, range=False):
 			api_requests.append(request_symbols)
 			request_symbols = ""
 			x = 0
+
+	if x % 100 != 0:
+		api_requests.append(request_symbols)
 
 	for api_request in api_requests:
 		api_request = api_request[:len(api_request)-1] + "&types=" #strip the , off the end of the request URL
@@ -80,8 +95,11 @@ def batch_request(symbols, batch_request_types, range=False):
 	if range != False:
 		api_suffix = api_suffix + '&range=' + range
 
+	#if debug:
+	#	print('batch_request::api_request::'+api_request)
+
 	if debug:
-		print('batch_request::api_request::'+api_request)
+		print("batch_request::len(api_requests)::" + str(len(api_requests)))
 
 	for api_request in api_requests:
 		print("api_request::"+api_request)
@@ -303,6 +321,7 @@ def signals_to_string(signal):
 
 def run_calcs(symbols):
 	#main()
+	print("run_calcs::symbols" + str(symbols))
 	historical_data = batch_request(symbols, ['chart'], '5y')
 
 	long_symbols_13_48 = []
@@ -483,7 +502,6 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			message = message + "Todays Hold Symbols: <br /> 50\\200:" + str(ema_results[4]) + "<br /><br />"
 			message = message + "Todays Long Symbols: <br /> 50\\200:" + str(ema_results[5]) + "<br /><br />"
 
-        
 			# Write content as utf-8 data
 			self.wfile.write(bytes(message, "utf8"))
 		return
