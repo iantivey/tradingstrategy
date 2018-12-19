@@ -15,7 +15,7 @@ uber_debug = False
 
 api_prefix = 'https://api.iextrading.com/1.0/'
 
-current_active = ['INDA','LQD','OUSA','PTY','CMF']
+current_active = ['INDA','LQD','OUSA','PTY','CMF','SH']
 
 fidelity_sector_etfs = ['FENY', 'FNCL','FHLC', 'FIDU', 'FTEC', 'FMAT', 'FCOM', 'FUTY', 'FREL', 'FDIS', 'FSTA']
 fidelity_broad_etfs = ['ONEQ', 'FDVV', 'FDRR', 'FDMO', 'FDLO', 'FVAL', 'FQAL', 'FIDI', 'FIVA']
